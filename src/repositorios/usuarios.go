@@ -3,6 +3,7 @@ package repositorios
 import (
 	"api/src/models"
 	"database/sql"
+	"fmt"
 )
 
 type usuarios struct {
@@ -35,4 +36,63 @@ func (u usuarios) Criar(usuario models.Usuario) (uint64, error) {
 	}
 
 	return uint64(ultimoIDInserido), nil
+}
+
+// Buscar traz todos os usuarios que possuam nomeOuNick
+func (u usuarios) Buscar(nomeOuNick string) ([]models.Usuario, error) {
+	nomeOuNick = fmt.Sprintf("%%%s%%", nomeOuNick)
+
+	linhas, err := u.db.Query(
+		"select id, nome, nick, email, criadoEm from usuarios where nome LIKE ? or nick LIKE ?",
+		nomeOuNick, nomeOuNick,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer linhas.Close()
+
+	var usuarios []models.Usuario
+
+	for linhas.Next() {
+		var usuario models.Usuario
+
+		if err = linhas.Scan(
+			&usuario.ID,
+			&usuario.Nome,
+			&usuario.Nick,
+			&usuario.Email,
+			&usuario.CriadoEm,
+		); err != nil {
+			return nil, err
+		}
+
+		usuarios = append(usuarios, usuario)
+	}
+	return usuarios, nil
+}
+
+// BuscarPorID traz um usuário do banco de dados
+func (u usuarios) BuscarPorID(ID uint64) (models.Usuario, error) {
+	linhas, err := u.db.Query(
+		"select id, nome, nick, email, criadoEm from usuarios where id = ?", ID,
+	)
+	if err != nil {
+		return models.Usuario{}, err
+	}
+	defer linhas.Close()
+
+	var usuario models.Usuario
+
+	if linhas.Next() {
+		if err = linhas.Scan(
+			&usuario.ID,
+			&usuario.Nome,
+			&usuario.Nick,
+			&usuario.Email,
+			&usuario.CriadoEm,
+		); err != nil {
+			return models.Usuario{}, err
+		}
+	}
+	return usuario, nil
 }
