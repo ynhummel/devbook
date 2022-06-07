@@ -96,3 +96,33 @@ func (u usuarios) BuscarPorID(ID uint64) (models.Usuario, error) {
 	}
 	return usuario, nil
 }
+
+// Altualizar altera as informações de um usuario no banco de dados
+func (u usuarios) Atualizar(ID uint64, usuario models.Usuario) error {
+	statement, err := u.db.Prepare(
+		"update usuarios set nome = ?, nick = ?, email = ? where id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(usuario.Nome, usuario.Nick, usuario.Email, ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Exclui as informações de um usuário no banco de dados
+func (u usuarios) Deletar(ID uint64) error {
+	statement, err := u.db.Prepare("delete from usuarios where id = ?")
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(ID); err != nil {
+		return err
+	}
+	return nil
+}
