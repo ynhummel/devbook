@@ -97,6 +97,27 @@ func (u usuarios) BuscarPorID(ID uint64) (models.Usuario, error) {
 	return usuario, nil
 }
 
+// BuscarPorEmail traz um usuario do banco de dados que possua o email passado
+func (u usuarios) BuscarPorEmail(email string) (models.Usuario, error) {
+	linhas, err := u.db.Query(
+		"select id, senha from usuarios where email = ?", email,
+	)
+	if err != nil {
+		return models.Usuario{}, err
+	}
+	defer linhas.Close()
+
+	var usuario models.Usuario
+
+	if linhas.Next() {
+		if err = linhas.Scan(&usuario.ID, &usuario.Senha); err != nil {
+			return models.Usuario{}, err
+		}
+	}
+
+	return usuario, nil
+}
+
 // Altualizar altera as informações de um usuario no banco de dados
 func (u usuarios) Atualizar(ID uint64, usuario models.Usuario) error {
 	statement, err := u.db.Prepare(
